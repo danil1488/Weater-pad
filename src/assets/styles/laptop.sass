@@ -1,0 +1,18 @@
+$dark-colors: #0d0d0d, #756e6e, #362a52, #837421
+$animation-duration: 15s
+$animation-timing: ease-in-out
+$animation-iteration: infinite
+
+.laptop
+  background: linear-gradient(90deg, $dark-colors)
+  background-size: 400% 400%
+  animation: dark-gradient $animation-duration $animation-timing $animation-iteration
+  transform: translate3d(0, 0, 0)
+
+@keyframes dark-gradient
+  0%
+    background-position: 0% 50%
+  50%
+    background-position: 100% 50%
+  100%
+    background-position: 0% 50%
