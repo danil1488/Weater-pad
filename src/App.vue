@@ -1,18 +1,29 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Highlights from './components/Highlights.vue'
-import WeatherSummaryVue from './components/WeatherSummary.vue'
+import WeatherSummary from './components/WeatherSummary.vue'
 import { API_KEY, BASE_URL } from './constants/index.js'
 import Coords from './components/Coords.vue'
 import Humidity from './components/Humidity.vue'
 
 const city = ref('Magnitogorsk')
 const weatherInfo = ref(null)
+const errorMessage = ref('')
+const isError = computed(() => weatherInfo.value?.cod !== 200)
 
 function getWeather() {
+  errorMessage.value = ''
   fetch(`${BASE_URL}?q=${city.value}&units=metric&appid=${API_KEY}`)
-    .then((response) => response.json())
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch weather data')
+      }
+      return response.json()
+    })
     .then((data) => (weatherInfo.value = data))
+    .catch((error) => {
+      weatherInfo.value = null
+    })
 }
 
 onMounted(getWeather)
@@ -23,33 +34,58 @@ onMounted(getWeather)
     <main class="main">
       <div class="container">
         <div class="laptop">
-          <div class="sections">
-            <section class="section section-left">
-              <div class="info">
-                <div class="city-inner">
-                  <input
-                    v-model="city"
-                    @keyup.enter="getWeather"
-                    type="text"
-                    class="search"
-                  />
-                </div>
-                <WeatherSummaryVue :weatherInfo="weatherInfo" />
-              </div>
-            </section>
-            <section class="section section-right">
-              <Highlights :weatherInfo="weatherInfo" />
-            </section>
+          <div v-if="errorMessage" class="error-message">
+            {{ errorMessage }}
           </div>
-          <div v-if="weatherInfo?.weather" class="sections">
-            <Coords :coord="weatherInfo.coord" />
-            <Humidity :humidity="weatherInfo.main.humidity" />
+          <div v-else>
+            <div class="sections">
+              <section
+                :class="[
+                  'section',
+                  'section-left',
+                  { 'section-error': isError },
+                ]"
+              >
+                <div class="info">
+                  <div class="city-inner">
+                    <input
+                      v-model="city"
+                      @keyup.enter="getWeather"
+                      type="text"
+                      class="search"
+                    />
+                  </div>
+                  <WeatherSummary v-if="!isError" :weatherInfo="weatherInfo" />
+                  <div v-else class="error">
+                    <div class="error-title">Всё сломалось...</div>
+                    <div v-if="weatherInfo?.message" class="error-message">
+                      {{ weatherInfo?.message }}
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <section v-if="!isError" class="section section-right">
+                <Highlights :weatherInfo="weatherInfo" />
+              </section>
+            </div>
+            <div v-if="weatherInfo?.weather" class="sections">
+              <Coords :coord="weatherInfo.coord" />
+              <Humidity :humidity="weatherInfo.main.humidity" />
+            </div>
           </div>
         </div>
       </div>
     </main>
   </div>
 </template>
+
+<style scoped>
+.error-message {
+  color: red;
+  text-align: center;
+  margin: 20px 0;
+}
+</style>
 
 <style lang="sass" scoped>
 @import './assets/styles/laptop'
@@ -87,6 +123,11 @@ onMounted(getWeather)
   @media (max-width: 767px)
     width: 100%
     padding-right: 0
+
+  &.section-error
+  min-width: 235px
+  width: auto
+  padding-right: 0
 
 .section-right
   width: 70%
