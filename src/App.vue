@@ -5,28 +5,14 @@ import WeatherSummaryVue from './components/WeatherSummary.vue'
 import { API_KEY, BASE_URL } from './constants/index.js'
 import Coords from './components/Coords.vue'
 import Humidity from './components/Humidity.vue'
-import Loading from './components/Loading.vue'
 
 const city = ref('Magnitogorsk')
 const weatherInfo = ref(null)
-const isLoading = ref(true)
 
 function getWeather() {
-  isLoading.value = true
   fetch(`${BASE_URL}?q=${city.value}&units=metric&appid=${API_KEY}`)
     .then((response) => response.json())
-    .then((data) => {
-      weatherInfo.value = data
-
-      setTimeout(() => {
-        isLoading.value = false
-      }, 500)
-    })
-    .catch(() => {
-      setTimeout(() => {
-        isLoading.value = false
-      }, 500)
-    })
+    .then((data) => (weatherInfo.value = data))
 }
 
 onMounted(getWeather)
@@ -37,30 +23,27 @@ onMounted(getWeather)
     <main class="main">
       <div class="container">
         <div class="laptop">
-          <Loading v-if="isLoading" />
-          <div v-else>
-            <div class="sections">
-              <section class="section section-left">
-                <div class="info">
-                  <div class="city-inner">
-                    <input
-                      v-model="city"
-                      @keyup.enter="getWeather"
-                      type="text"
-                      class="search"
-                    />
-                  </div>
-                  <WeatherSummaryVue :weatherInfo="weatherInfo" />
+          <div class="sections">
+            <section class="section section-left">
+              <div class="info">
+                <div class="city-inner">
+                  <input
+                    v-model="city"
+                    @keyup.enter="getWeather"
+                    type="text"
+                    class="search"
+                  />
                 </div>
-              </section>
-              <section class="section section-right">
-                <Highlights :weatherInfo="weatherInfo" />
-              </section>
-            </div>
-            <div v-if="weatherInfo?.weather" class="sections">
-              <Coords :coord="weatherInfo.coord" />
-              <Humidity :humidity="weatherInfo.main.humidity" />
-            </div>
+                <WeatherSummaryVue :weatherInfo="weatherInfo" />
+              </div>
+            </section>
+            <section class="section section-right">
+              <Highlights :weatherInfo="weatherInfo" />
+            </section>
+          </div>
+          <div v-if="weatherInfo?.weather" class="sections">
+            <Coords :coord="weatherInfo.coord" />
+            <Humidity :humidity="weatherInfo.main.humidity" />
           </div>
         </div>
       </div>
